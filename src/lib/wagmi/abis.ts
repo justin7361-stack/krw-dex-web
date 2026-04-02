@@ -4,38 +4,37 @@
 export const PAIR_REGISTRY_ABI = [
   {
     type: 'function',
-    name: 'getPairs',
+    name: 'getAllPairIds',
     inputs: [],
+    outputs: [{ type: 'bytes32[]' }],
+    stateMutability: 'view',
+  },
+  {
+    // Pair struct field order in PairRegistry.sol:
+    // baseToken, quoteToken, tickSize, lotSize, minOrderSize, maxOrderSize, active
+    type: 'function',
+    name: 'pairs',
+    inputs: [{ name: 'pairId', type: 'bytes32' }],
     outputs: [
-      {
-        type: 'tuple[]',
-        components: [
-          { name: 'baseToken',  type: 'address' },
-          { name: 'quoteToken', type: 'address' },
-          { name: 'active',     type: 'bool'    },
-          { name: 'tickSize',   type: 'uint256' },
-          { name: 'lotSize',    type: 'uint256' },
-          { name: 'minOrderSize', type: 'uint256' },
-          { name: 'maxOrderSize', type: 'uint256' },
-        ],
-      },
+      { name: 'baseToken',    type: 'address' },
+      { name: 'quoteToken',   type: 'address' },
+      { name: 'tickSize',     type: 'uint256' },
+      { name: 'lotSize',      type: 'uint256' },
+      { name: 'minOrderSize', type: 'uint256' },
+      { name: 'maxOrderSize', type: 'uint256' },
+      { name: 'active',       type: 'bool'    },
     ],
     stateMutability: 'view',
   },
   {
     type: 'function',
-    name: 'pairs',
-    inputs: [{ name: 'pairId', type: 'bytes32' }],
-    outputs: [
+    name: 'getPairId',
+    inputs: [
       { name: 'baseToken',  type: 'address' },
       { name: 'quoteToken', type: 'address' },
-      { name: 'active',     type: 'bool'    },
-      { name: 'tickSize',   type: 'uint256' },
-      { name: 'lotSize',    type: 'uint256' },
-      { name: 'minOrderSize', type: 'uint256' },
-      { name: 'maxOrderSize', type: 'uint256' },
     ],
-    stateMutability: 'view',
+    outputs: [{ type: 'bytes32' }],
+    stateMutability: 'pure',
   },
   {
     type: 'function',

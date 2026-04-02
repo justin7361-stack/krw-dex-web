@@ -42,6 +42,9 @@ export function ApiKeyModal({ isOpen, onClose }: Props) {
     setError(null);
 
     try {
+      // Generate a random key client-side (server stores it as-is)
+      const generatedKey = crypto.randomUUID();
+
       const res = await fetch(`${API_BASE}/admin/api-keys`, {
         method: 'POST',
         headers: {
@@ -49,9 +52,10 @@ export function ApiKeyModal({ isOpen, onClose }: Props) {
           'Authorization': `Bearer ${ADMIN_API_KEY}`,
         },
         body: JSON.stringify({
-          address,
-          role: 'OPERATOR',
-          description: `Web client key for ${address}`,
+          key:   generatedKey,
+          maker: address.toLowerCase(),
+          role:  'trade',
+          label: `web-${address.slice(0, 8)}`,
         }),
       });
 
@@ -60,8 +64,8 @@ export function ApiKeyModal({ isOpen, onClose }: Props) {
         throw new Error(`등록 실패 (${res.status}): ${body}`);
       }
 
-      const data = await res.json() as { apiKey: string; role: string };
-      setApiKey(data.apiKey, data.role as 'OPERATOR', address);
+      // Server returns { registered: true } — we save the key we generated
+      setApiKey(generatedKey, 'OPERATOR', address);
       setSuccess(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : '알 수 없는 오류');

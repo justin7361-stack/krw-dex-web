@@ -2,6 +2,9 @@ import { getDefaultConfig } from '@rainbow-me/rainbowkit';
 import { defineChain } from 'viem';
 import { mainnet } from 'wagmi/chains'; // fallback for WalletConnect
 
+// Allow overriding the RPC URL for local dev (e.g. Anvil http://127.0.0.1:8545)
+const rpcUrl = import.meta.env['VITE_RPC_URL'] || 'https://rpc.hyperliquid-testnet.xyz/evm';
+
 // ─── HyperEVM Testnet ───────────────────────────────────────────────────────
 export const hyperEvmTestnet = defineChain({
   id: 998,
@@ -13,7 +16,7 @@ export const hyperEvmTestnet = defineChain({
   },
   rpcUrls: {
     default: {
-      http: ['https://rpc.hyperliquid-testnet.xyz/evm'],
+      http: [rpcUrl],
     },
   },
   blockExplorers: {

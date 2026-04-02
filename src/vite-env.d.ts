@@ -8,6 +8,7 @@ interface ImportMetaEnv {
   readonly VITE_PAIR_REGISTRY_ADDRESS: string;
   readonly VITE_MARGIN_REGISTRY_ADDRESS: string;
   readonly VITE_HYBRID_POOL_ADDRESS: string;
+  readonly VITE_RPC_URL: string;
   readonly VITE_WALLETCONNECT_PROJECT_ID: string;
   readonly VITE_TESTNET_ADMIN_API_KEY: string;
 }
