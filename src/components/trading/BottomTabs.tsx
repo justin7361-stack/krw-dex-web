@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { useAccount } from 'wagmi';
 
 import { useTradingStore } from '@/store/tradingStore';
 import { useOpenOrders, useFilledOrders } from '@/hooks/api/useOpenOrders';
 import { usePositions } from '@/hooks/api/usePositions';
 import { useCancelOrder } from '@/hooks/mutations/useCancelOrder';
+import { useAmendOrder } from '@/hooks/mutations/useAmendOrder';
 import { formatKRW, formatAmount } from '@/lib/bigint/format';
 import type { Order } from '@/types/api';
 import type { PositionEntry } from '@/hooks/api/usePositions';
@@ -21,6 +23,7 @@ export function BottomTabs({ pairId }: Props) {
   const { data: filledOrders } = useFilledOrders(address ?? '');
   const { data: posData      } = usePositions(address ?? '');
   const cancelOrder = useCancelOrder();
+  const amendOrder  = useAmendOrder();
 
   const openCount = openOrders?.length ?? 0;
   const positions = posData?.positions ?? [];
@@ -57,7 +60,12 @@ export function BottomTabs({ pairId }: Props) {
             지갑을 연결하세요
           </div>
         ) : bottomTab === 'openOrders' ? (
-          <OpenOrdersTable orders={openOrders ?? []} onCancel={(id) => cancelOrder.mutate(id)} />
+          <OpenOrdersTable
+            orders={openOrders ?? []}
+            onCancel={(id) => cancelOrder.mutate(id)}
+            onAmend={(req) => amendOrder.mutate(req)}
+            isAmending={amendOrder.isPending}
+          />
         ) : bottomTab === 'filled' ? (
           <FilledOrdersTable orders={filledOrders ?? []} />
         ) : (
@@ -70,13 +78,46 @@ export function BottomTabs({ pairId }: Props) {
 
 // ─── Open Orders ─────────────────────────────────────────────────────────────
 
+interface AmendState {
+  priceInput:  string;
+  amountInput: string;
+}
+
 function OpenOrdersTable({
   orders,
   onCancel,
+  onAmend,
+  isAmending,
 }: {
-  orders: Order[];
-  onCancel: (id: string) => void;
+  orders:     Order[];
+  onCancel:   (id: string) => void;
+  onAmend:    (req: { orderId: string; price?: string; amount?: string }) => void;
+  isAmending: boolean;
 }) {
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [amendState, setAmendState] = useState<AmendState>({ priceInput: '', amountInput: '' });
+
+  function startEdit(order: Order) {
+    setEditingId(order.orderId);
+    setAmendState({
+      priceInput:  order.price > 0n ? order.price.toString() : '',
+      amountInput: order.amount.toString(),
+    });
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setAmendState({ priceInput: '', amountInput: '' });
+  }
+
+  function submitAmend(orderId: string) {
+    const req: { orderId: string; price?: string; amount?: string } = { orderId };
+    if (amendState.priceInput.trim())  req.price  = amendState.priceInput.trim();
+    if (amendState.amountInput.trim()) req.amount = amendState.amountInput.trim();
+    onAmend(req);
+    cancelEdit();
+  }
+
   if (orders.length === 0) {
     return (
       <div className="flex items-center justify-center h-full text-tiny text-color-text-0">
@@ -97,33 +138,99 @@ function OpenOrdersTable({
         </tr>
       </thead>
       <tbody>
-        {orders.map((order) => (
-          <tr key={order.orderId} className="border-b border-color-border hover:bg-color-layer-2">
-            <td className={`px-3 py-2 text-tiny font-medium ${
-              order.side === 'buy' ? 'text-color-positive' : 'text-color-negative'
-            }`}>
-              {order.side === 'buy' ? '매수' : '매도'}
-            </td>
-            <td className="px-3 py-2 text-tiny tabular-nums text-color-text-2">
-              {order.price > 0n ? formatKRW(order.price) : '시장가'}
-            </td>
-            <td className="px-3 py-2 text-tiny tabular-nums text-color-text-1">
-              {formatAmount(order.amount)}
-            </td>
-            <td className="px-3 py-2 text-tiny tabular-nums text-color-text-0">
-              {formatAmount(order.filledAmount)}
-            </td>
-            <td className="px-3 py-2 text-tiny text-color-text-0">{order.status}</td>
-            <td className="px-3 py-2">
-              <button
-                onClick={() => onCancel(order.orderId)}
-                className="text-tiny text-color-error hover:underline"
-              >
-                취소
-              </button>
-            </td>
-          </tr>
-        ))}
+        {orders.map((order) => {
+          const isEditing = editingId === order.orderId;
+          const isLimitOrder = order.price > 0n;
+
+          return (
+            <tr key={order.orderId} className="border-b border-color-border hover:bg-color-layer-2">
+              <td className={`px-3 py-2 text-tiny font-medium ${
+                order.side === 'buy' ? 'text-color-positive' : 'text-color-negative'
+              }`}>
+                {order.side === 'buy' ? '매수' : '매도'}
+              </td>
+
+              {/* Price cell — inline edit when editing */}
+              <td className="px-3 py-2 text-tiny tabular-nums text-color-text-2">
+                {isEditing && isLimitOrder ? (
+                  <input
+                    type="number"
+                    value={amendState.priceInput}
+                    onChange={(e) => setAmendState((s) => ({ ...s, priceInput: e.target.value }))}
+                    className="w-24 px-1.5 py-0.5 rounded bg-color-layer-3 border border-color-border text-tiny text-color-text-2 tabular-nums outline-none focus:border-color-accent"
+                    placeholder="가격"
+                    min="0"
+                  />
+                ) : (
+                  isLimitOrder ? formatKRW(order.price) : '시장가'
+                )}
+              </td>
+
+              {/* Amount cell — inline edit when editing */}
+              <td className="px-3 py-2 text-tiny tabular-nums text-color-text-1">
+                {isEditing ? (
+                  <input
+                    type="number"
+                    value={amendState.amountInput}
+                    onChange={(e) => setAmendState((s) => ({ ...s, amountInput: e.target.value }))}
+                    className="w-24 px-1.5 py-0.5 rounded bg-color-layer-3 border border-color-border text-tiny text-color-text-1 tabular-nums outline-none focus:border-color-accent"
+                    placeholder="수량"
+                    min="0"
+                  />
+                ) : (
+                  formatAmount(order.amount)
+                )}
+              </td>
+
+              <td className="px-3 py-2 text-tiny tabular-nums text-color-text-0">
+                {formatAmount(order.filledAmount)}
+              </td>
+              <td className="px-3 py-2 text-tiny text-color-text-0">{order.status}</td>
+
+              {/* Action buttons */}
+              <td className="px-3 py-2">
+                {isEditing ? (
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => submitAmend(order.orderId)}
+                      disabled={isAmending}
+                      className="text-tiny text-color-accent hover:underline disabled:opacity-50"
+                    >
+                      확인
+                    </button>
+                    <span className="text-color-border">|</span>
+                    <button
+                      onClick={cancelEdit}
+                      className="text-tiny text-color-text-0 hover:underline"
+                    >
+                      취소
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    {isLimitOrder && (
+                      <>
+                        <button
+                          onClick={() => startEdit(order)}
+                          className="text-tiny text-color-accent hover:underline"
+                        >
+                          수정
+                        </button>
+                        <span className="text-color-border">|</span>
+                      </>
+                    )}
+                    <button
+                      onClick={() => onCancel(order.orderId)}
+                      className="text-tiny text-color-error hover:underline"
+                    >
+                      취소
+                    </button>
+                  </div>
+                )}
+              </td>
+            </tr>
+          );
+        })}
       </tbody>
     </table>
   );
@@ -174,6 +281,48 @@ function FilledOrdersTable({ orders }: { orders: Order[] }) {
   );
 }
 
+// ─── Liquidation Risk Bar ────────────────────────────────────────────────────
+
+/**
+ * Visual bar showing how far current mark price is from liquidation.
+ * Green → yellow → red as distance shrinks (≤30% → ≤10% → ≤5%).
+ */
+function LiqRiskBar({ markPrice, liquidationPrice }: { markPrice: bigint; liquidationPrice: bigint }) {
+  if (liquidationPrice === 0n || markPrice === 0n) return null;
+
+  const diff     = markPrice > liquidationPrice ? markPrice - liquidationPrice : liquidationPrice - markPrice;
+  const distPct  = Number((diff * 10000n) / liquidationPrice) / 100; // e.g. 8.5
+
+  // Fill: higher distance = more green fill; clamp 0-100
+  const fillPct  = Math.min(100, Math.max(0, distPct));
+  const barColor =
+    distPct <= 5  ? 'bg-color-negative' :
+    distPct <= 10 ? 'bg-yellow-500' :
+    distPct <= 30 ? 'bg-yellow-400' :
+    'bg-color-positive';
+
+  const textColor =
+    distPct <= 5  ? 'text-color-negative' :
+    distPct <= 10 ? 'text-yellow-500' :
+    distPct <= 30 ? 'text-yellow-400' :
+    'text-color-positive';
+
+  return (
+    <div className="flex items-center gap-1.5 min-w-[100px]">
+      {/* Progress bar */}
+      <div className="flex-1 h-1 rounded-full bg-color-layer-4 overflow-hidden">
+        <div
+          className={`h-full rounded-full transition-all ${barColor}`}
+          style={{ width: `${Math.min(fillPct, 100)}%` }}
+        />
+      </div>
+      <span className={`text-tiny tabular-nums ${textColor}`}>
+        {distPct.toFixed(1)}%
+      </span>
+    </div>
+  );
+}
+
 // ─── Positions ────────────────────────────────────────────────────────────────
 
 function PositionsTable({
@@ -185,17 +334,50 @@ function PositionsTable({
   totalBalance?: bigint;
   freeMargin?:   bigint;
 }) {
+  // Margin ratio (used / total) for the header risk indicator
+  const usedMargin   = totalBalance !== undefined && freeMargin !== undefined
+    ? totalBalance - freeMargin
+    : 0n;
+  const marginRatioPct = totalBalance !== undefined && totalBalance > 0n
+    ? Number((usedMargin * 10000n) / totalBalance) / 100
+    : 0;
+  const marginBarColor =
+    marginRatioPct >= 80 ? 'bg-color-negative' :
+    marginRatioPct >= 50 ? 'bg-yellow-500'     :
+    'bg-color-positive';
+
   return (
     <div className="flex flex-col h-full">
-      {/* Margin summary header */}
+      {/* Margin summary header + ratio bar */}
       {totalBalance !== undefined && (
-        <div className="flex gap-6 px-4 py-2 border-b border-color-border bg-color-layer-2 text-tiny">
-          <span className="text-color-text-0">
-            총 잔고: <span className="text-color-text-2 tabular-nums">{formatKRW(totalBalance)}</span>
-          </span>
-          <span className="text-color-text-0">
-            가용 마진: <span className="text-color-positive tabular-nums">{formatKRW(freeMargin ?? 0n)}</span>
-          </span>
+        <div className="flex flex-col gap-1.5 px-4 py-2.5 border-b border-color-border bg-color-layer-2">
+          <div className="flex gap-6 text-tiny">
+            <span className="text-color-text-0">
+              총 잔고: <span className="text-color-text-2 tabular-nums">{formatKRW(totalBalance)}</span>
+            </span>
+            <span className="text-color-text-0">
+              가용 마진: <span className="text-color-positive tabular-nums">{formatKRW(freeMargin ?? 0n)}</span>
+            </span>
+            <span className="text-color-text-0">
+              사용 마진: <span className="text-color-text-1 tabular-nums">{formatKRW(usedMargin)}</span>
+            </span>
+          </div>
+          {/* Margin usage bar */}
+          <div className="flex items-center gap-2">
+            <div className="flex-1 h-1.5 rounded-full bg-color-layer-4 overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all ${marginBarColor}`}
+                style={{ width: `${Math.min(marginRatioPct, 100)}%` }}
+              />
+            </div>
+            <span className={`text-tiny tabular-nums ${
+              marginRatioPct >= 80 ? 'text-color-negative' :
+              marginRatioPct >= 50 ? 'text-yellow-500' :
+              'text-color-text-0'
+            }`}>
+              {marginRatioPct.toFixed(1)}% 사용
+            </span>
+          </div>
         </div>
       )}
 
@@ -207,7 +389,7 @@ function PositionsTable({
         <table className="w-full">
           <thead>
             <tr className="text-left border-b border-color-border">
-              {['페어', '방향', '크기', '마진', '마크가격', '미실현손익', '모드'].map((h) => (
+              {['페어', '방향', '크기', '마진', '마크가격', '미실현손익', '청산거리'].map((h) => (
                 <th key={h} className="px-3 py-2 text-tiny text-color-text-0 font-normal">{h}</th>
               ))}
             </tr>
@@ -238,7 +420,14 @@ function PositionsTable({
                   }`}>
                     {pos.unrealizedPnl !== 0n ? formatKRW(pos.unrealizedPnl) : '—'}
                   </td>
-                  <td className="px-3 py-2 text-tiny text-color-text-0">{pos.mode}</td>
+                  {/* Liquidation distance bar */}
+                  <td className="px-3 py-2">
+                    {pos.markPrice > 0n && pos.liquidationPrice > 0n ? (
+                      <LiqRiskBar markPrice={pos.markPrice} liquidationPrice={pos.liquidationPrice} />
+                    ) : (
+                      <span className="text-tiny text-color-text-0">—</span>
+                    )}
+                  </td>
                 </tr>
               );
             })}
