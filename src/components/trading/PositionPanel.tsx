@@ -1,6 +1,7 @@
 import { useAccount } from 'wagmi';
 
 import { useFundingRate } from '@/hooks/api/useFundingRate';
+import { usePositions } from '@/hooks/api/usePositions';
 import { formatKRW, formatPercent, formatAmount } from '@/lib/bigint/format';
 
 interface Props {
@@ -8,8 +9,9 @@ interface Props {
 }
 
 export function PositionPanel({ pairId }: Props) {
-  const { isConnected } = useAccount();
-  const { data: funding } = useFundingRate(pairId);
+  const { address, isConnected } = useAccount();
+  const { data: funding   } = useFundingRate(pairId);
+  const { data: posData   } = usePositions(address ?? '');
 
   return (
     <div className="flex flex-col h-full">
@@ -50,15 +52,55 @@ export function PositionPanel({ pairId }: Props) {
         </div>
       )}
 
-      {/* Positions placeholder */}
-      <div className="px-3 py-2 border-b border-color-border">
+      {/* Positions */}
+      <div className="px-3 py-2 border-b border-color-border flex items-center justify-between">
         <span className="text-tiny font-medium text-color-text-1">내 포지션</span>
+        {posData && (
+          <span className="text-tiny text-color-text-0 tabular-nums">
+            가용 <span className="text-color-positive">{formatKRW(posData.freeMargin)}</span>
+          </span>
+        )}
       </div>
-      <div className="flex-1 flex items-center justify-center">
-        {isConnected ? (
-          <p className="text-tiny text-color-text-0">포지션 없음</p>
+      <div className="flex-1 overflow-y-auto">
+        {!isConnected ? (
+          <div className="flex items-center justify-center h-full">
+            <p className="text-tiny text-color-text-0">지갑 연결 필요</p>
+          </div>
+        ) : (posData?.positions ?? []).filter(p => p.pairId.startsWith(pairId.split('/')[0] ?? '')).length === 0 ? (
+          <div className="flex items-center justify-center h-full">
+            <p className="text-tiny text-color-text-0">포지션 없음</p>
+          </div>
         ) : (
-          <p className="text-tiny text-color-text-0">지갑 연결 필요</p>
+          <div className="flex flex-col gap-0">
+            {posData?.positions.map((pos) => {
+              const isLong = pos.size > 0n;
+              return (
+                <div key={`${pos.maker}-${pos.pairId}`} className="px-3 py-3 border-b border-color-border">
+                  <div className="spacedRow mb-1.5">
+                    <span className={`text-tiny font-semibold ${isLong ? 'text-color-positive' : 'text-color-negative'}`}>
+                      {isLong ? '롱' : '숏'}
+                    </span>
+                    <span className="text-tiny text-color-text-0">{pos.mode}</span>
+                  </div>
+                  <div className="spacedRow">
+                    <span className="text-tiny text-color-text-0">크기</span>
+                    <span className="text-tiny tabular-nums text-color-text-2">
+                      {formatAmount(pos.size < 0n ? -pos.size : pos.size)}
+                    </span>
+                  </div>
+                  <div className="spacedRow">
+                    <span className="text-tiny text-color-text-0">미실현손익</span>
+                    <span className={`text-tiny tabular-nums ${
+                      pos.unrealizedPnl > 0n ? 'text-color-positive' :
+                      pos.unrealizedPnl < 0n ? 'text-color-negative' : 'text-color-text-0'
+                    }`}>
+                      {pos.unrealizedPnl !== 0n ? formatKRW(pos.unrealizedPnl) : '—'}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         )}
       </div>
     </div>
