@@ -9,7 +9,7 @@ import { activeChain } from '../wagmi/config';
 
 export function getOrderDomain() {
   return {
-    name: 'HyperKRW',
+    name: 'KRW DEX',
     version: '1',
     chainId: activeChain.id,
     verifyingContract: CONTRACT_ADDRESSES.orderSettlement as Address,
