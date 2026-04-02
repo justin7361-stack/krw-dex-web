@@ -1,0 +1,120 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── HyperKRW Dark Trading Theme — CSS Custom Properties ─── */
+:root {
+  /* Base colors */
+  --color-white: #ffffff;
+  --color-black: #000000;
+
+  /* Semantic trading colors */
+  --color-green: #25c26e;
+  --color-red: #f14b4b;
+  --color-red-faded: rgba(241, 75, 75, 0.16);
+  --color-green-faded: rgba(37, 194, 110, 0.16);
+  --color-white-faded: rgba(255, 255, 255, 0.16);
+
+  /* Layer system (dark trading UI) */
+  --color-layer-0: #0d0e11;
+  --color-layer-1: #13141a;
+  --color-layer-2: #1a1b23;
+  --color-layer-3: #21222d;
+  --color-layer-4: #282935;
+  --color-layer-5: #32333f;
+  --color-layer-6: #3d3e4c;
+  --color-layer-7: #4b4c5e;
+
+  /* Borders */
+  --color-border: rgba(255, 255, 255, 0.1);
+  --color-border-faded: rgba(255, 255, 255, 0.05);
+  --color-border-white: rgba(255, 255, 255, 0.2);
+  --color-border-red: rgba(241, 75, 75, 0.2);
+
+  /* Text */
+  --color-text-0: rgba(255, 255, 255, 0.45);   /* tertiary */
+  --color-text-1: rgba(255, 255, 255, 0.75);   /* secondary */
+  --color-text-2: rgba(255, 255, 255, 0.95);   /* primary */
+  --color-text-button: #ffffff;
+
+  /* Accent (HyperKRW brand — purple like dYdX / Hyperliquid) */
+  --color-accent: #6a4dff;
+  --color-accent-faded: rgba(106, 77, 255, 0.16);
+
+  /* Status */
+  --color-success: #25c26e;
+  --color-warning: #f5b944;
+  --color-error: #f14b4b;
+
+  /* Positive/Negative (for P&L display) */
+  --color-positive: #25c26e;
+  --color-negative: #f14b4b;
+  --color-positive-faded: rgba(37, 194, 110, 0.12);
+  --color-negative-faded: rgba(241, 75, 75, 0.12);
+}
+
+/* ─── Base Reset ─── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: none;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-layer-5) transparent;
+}
+
+html, body, #root {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  background-color: var(--color-layer-0);
+  color: var(--color-text-2);
+  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.8125rem;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-layer-5);
+  border-radius: 2px;
+}
+
+/* Focus visible */
+:focus-visible {
+  outline: 1px solid var(--color-accent);
+  outline-offset: -1px;
+}
+
+/* Button base */
+button {
+  appearance: none;
+  background: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Monospace numbers for prices */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+/* Transition base */
+* {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
