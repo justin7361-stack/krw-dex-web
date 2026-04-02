@@ -31,6 +31,7 @@ const BIGINT_KEYS = new Set([
   'liquidationPrice',
   'unrealizedPnl',
   'fundingRate',
+  'rate',
   'balance',
   'totalBalance',
   'freeMargin',
