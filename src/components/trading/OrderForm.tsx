@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useAccount } from 'wagmi';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 
@@ -8,6 +9,7 @@ import { useNextNonce } from '@/hooks/chain/useNonce';
 import { useSubmitOrder } from '@/hooks/mutations/useSubmitOrder';
 import { buildLimitOrder, buildMarketOrder } from '@/lib/eip712/buildOrder';
 import { parseScaled, roundDown } from '@/lib/bigint/format';
+import { ApiKeyModal } from '@/components/modals/ApiKeyModal';
 import type { Address } from 'viem';
 
 interface Props {
@@ -22,6 +24,8 @@ export function OrderForm({ pairId }: Props) {
   const { address, isConnected } = useAccount();
   const apiKey = useAuthStore((s) => s.apiKey);
 
+  const [apiKeyModalOpen, setApiKeyModalOpen] = useState(false);
+
   const form            = useTradingStore((s) => s.form);
   const setFormField    = useTradingStore((s) => s.setFormField);
   const resetForm       = useTradingStore((s) => s.resetForm);
@@ -35,7 +39,7 @@ export function OrderForm({ pairId }: Props) {
   const handleSubmit = async () => {
     if (!address || !pair || nextNonce === undefined) return;
     if (!apiKey) {
-      alert('먼저 API 키를 등록하세요.');
+      setApiKeyModalOpen(true);
       return;
     }
 
@@ -98,7 +102,18 @@ export function OrderForm({ pairId }: Props) {
   const isBuyForm = form.side === 'buy';
 
   return (
+    <>
+      <ApiKeyModal isOpen={apiKeyModalOpen} onClose={() => setApiKeyModalOpen(false)} />
     <div className="flex flex-col h-full p-4 gap-4 overflow-y-auto">
+      {/* API Key status */}
+      {!apiKey && (
+        <button
+          onClick={() => setApiKeyModalOpen(true)}
+          className="w-full py-2 rounded-lg border border-color-warning bg-color-warning/10 text-tiny text-color-warning hover:bg-color-warning/20 transition-colors"
+        >
+          ⚠ API 키 등록 필요 — 클릭하여 등록
+        </button>
+      )}
       {/* Side tabs */}
       <div className="flex rounded-lg bg-color-layer-3 p-0.5">
         <button
@@ -230,5 +245,6 @@ export function OrderForm({ pairId }: Props) {
         </p>
       )}
     </div>
+    </>
   );
 }
