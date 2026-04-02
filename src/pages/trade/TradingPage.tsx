@@ -10,6 +10,7 @@ import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 import { WsStatusBadge } from '@/components/ui/WsStatusBadge';
 import { slugToPairId } from '@/lib/pair/pairId';
 import { useTradingStore } from '@/store/tradingStore';
+import { usePair } from '@/hooks/api/usePairs';
 
 /**
  * Main trading page layout:
@@ -27,6 +28,7 @@ export function TradingPage() {
   const setSelectedPairId = useTradingStore((s) => s.setSelectedPairId);
 
   const pairId = pairSlug ? slugToPairId(pairSlug) : '';
+  const { data: pairInfo } = usePair(pairId);
 
   useEffect(() => {
     if (pairId) setSelectedPairId(pairId);
@@ -42,10 +44,13 @@ export function TradingPage() {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Sub-nav: WS status */}
+      {/* Sub-nav: pair label + WS status */}
       <div className="flex items-center gap-3 px-3 h-8 border-b border-color-border bg-color-layer-1 shrink-0">
-        <span className="text-tiny text-color-text-0">
-          {pairId.split('/')[0]?.slice(0, 8)}/{pairId.split('/')[1]?.slice(0, 8)}
+        <span className="text-tiny font-medium text-color-text-1">
+          {pairInfo
+            ? `${pairInfo.baseSymbol}/${pairInfo.quoteSymbol}`
+            : `${pairId.split('/')[0]?.slice(0, 8) ?? ''}/${pairId.split('/')[1]?.slice(0, 8) ?? ''}`
+          }
         </span>
         <WsStatusBadge pairId={pairId} />
       </div>
