@@ -6,8 +6,8 @@ import { CandleChart } from '@/components/trading/CandleChart';
 import { OrderForm } from '@/components/trading/OrderForm';
 import { PositionPanel } from '@/components/trading/PositionPanel';
 import { BottomTabs } from '@/components/trading/BottomTabs';
+import { TickerBar } from '@/components/trading/TickerBar';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
-import { WsStatusBadge } from '@/components/ui/WsStatusBadge';
 import { slugToPairId } from '@/lib/pair/pairId';
 import { useTradingStore } from '@/store/tradingStore';
 import { usePair } from '@/hooks/api/usePairs';
@@ -15,17 +15,19 @@ import { usePair } from '@/hooks/api/usePairs';
 /**
  * Main trading page layout:
  *
- * ┌──────────────┬────────────────────────────┬──────────────────┐
- * │              │  CandleChart (60%)          │                  │
+ * ┌──────────────────────────────────────────────────────────────┐
+ * │  TickerBar: last price, 24h stats, mark/index, funding       │
+ * ├──────────────┬────────────────────────────┬──────────────────┤
+ * │              │  CandleChart (flex-[3])     │                  │
  * │  Orderbook   ├────────────────────────────┤  PositionPanel   │
- * │  280px       │  OrderForm                 │  320px           │
+ * │  280px       │  OrderForm  (flex-[2])     │  320px           │
  * ├──────────────┴────────────────────────────┴──────────────────┤
- * │  BottomTabs: 미체결 | 체결 | 포지션                            │
- * └─────────────────────────────────────────────────────────────-┘
+ * │  BottomTabs: 미체결 | 체결 | 포지션  (200px)                   │
+ * └──────────────────────────────────────────────────────────────┘
  */
 export function TradingPage() {
   const { pair: pairSlug } = useParams<{ pair: string }>();
-  const setSelectedPairId = useTradingStore((s) => s.setSelectedPairId);
+  const setSelectedPairId  = useTradingStore((s) => s.setSelectedPairId);
 
   const pairId = pairSlug ? slugToPairId(pairSlug) : '';
   const { data: pairInfo } = usePair(pairId);
@@ -44,19 +46,17 @@ export function TradingPage() {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Sub-nav: pair label + WS status */}
-      <div className="flex items-center gap-3 px-3 h-8 border-b border-color-border bg-color-layer-1 shrink-0">
-        <span className="text-tiny font-medium text-color-text-1">
-          {pairInfo
-            ? `${pairInfo.baseSymbol}/${pairInfo.quoteSymbol}`
-            : `${pairId.split('/')[0]?.slice(0, 8) ?? ''}/${pairId.split('/')[1]?.slice(0, 8) ?? ''}`
-          }
-        </span>
-        <WsStatusBadge pairId={pairId} />
-      </div>
+
+      {/* TickerBar — full-width stats strip (replaces sub-nav) */}
+      <TickerBar
+        pairId={pairId}
+        baseSymbol={pairInfo?.baseSymbol}
+        quoteSymbol={pairInfo?.quoteSymbol}
+      />
 
       {/* Main content area */}
       <div className="flex flex-1 min-h-0">
+
         {/* Left — Orderbook */}
         <div className="w-[280px] shrink-0 border-r border-color-border overflow-hidden">
           <ErrorBoundary label="Orderbook">
@@ -72,7 +72,7 @@ export function TradingPage() {
               <CandleChart pairId={pairId} />
             </ErrorBoundary>
           </div>
-          {/* Order form takes remaining */}
+          {/* Order form takes remaining 40% */}
           <div className="flex-[2] min-h-0 overflow-y-auto">
             <ErrorBoundary label="OrderForm">
               <OrderForm pairId={pairId} />

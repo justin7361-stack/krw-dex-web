@@ -4,13 +4,16 @@ import { api } from '@/lib/api/client';
 import { queryKeys } from '@/lib/api/queryKeys';
 
 export interface PositionEntry {
-  maker:         string;
-  pairId:        string;
-  size:          bigint;   // positive = long, negative = short
-  margin:        bigint;
-  mode:          'cross' | 'isolated';
-  markPrice:     bigint;
-  unrealizedPnl: bigint;
+  maker:            string;
+  pairId:           string;
+  size:             bigint;   // positive = long, negative = short
+  margin:           bigint;
+  mode:             'cross' | 'isolated';
+  markPrice:        bigint;
+  entryPrice:       bigint;
+  liquidationPrice: bigint;
+  leverage:         bigint;
+  unrealizedPnl:    bigint;
 }
 
 export interface PositionsResponse {
