@@ -1,9 +1,17 @@
 import { Outlet } from 'react-router-dom';
 import { TopNav } from './TopNav';
+import { BottomNav } from './BottomNav';
 
 /**
- * Root layout shell — top nav + page content.
- * React Router Outlet renders the matched child route.
+ * Root layout shell.
+ *
+ * ┌──────────────────────┐
+ * │  TopNav  (h-12)      │
+ * ├──────────────────────┤
+ * │  <Outlet />  (flex-1)│
+ * ├──────────────────────┤
+ * │  BottomNav (h-14)    │
+ * └──────────────────────┘
  */
 export function AppShell() {
   return (
@@ -12,6 +20,7 @@ export function AppShell() {
       <main className="flex-1 overflow-hidden">
         <Outlet />
       </main>
+      <BottomNav />
     </div>
   );
 }

@@ -181,3 +181,31 @@ export const ERC20_ABI = [
     stateMutability: 'view',
   },
 ] as const;
+
+export const MARGIN_REGISTRY_ABI = [
+  {
+    type: 'function',
+    name: 'depositMargin',
+    inputs: [{ name: 'amount', type: 'uint256' }],
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    name: 'withdrawMargin',
+    inputs: [{ name: 'amount', type: 'uint256' }],
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    name: 'getAccount',
+    inputs: [{ name: 'user', type: 'address' }],
+    outputs: [
+      { name: 'totalBalance', type: 'uint256' },
+      { name: 'freeMargin',   type: 'uint256' },
+      { name: 'usedMargin',   type: 'uint256' },
+    ],
+    stateMutability: 'view',
+  },
+] as const;
