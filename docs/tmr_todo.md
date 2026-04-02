@@ -1,10 +1,14 @@
 # HyperKRW DEX Web — 다음 작업 목록
 
-## 현재 상태 (2026-04-02)
+## 현재 상태 (2026-04-02 갱신)
 
-**완료:** F-0~F-4 (전체 프론트엔드 MVP) + D-1~D-4 (로컬 Anvil E2E 검증)
-- TypeScript 타입체크: ✅ 클린
-- 로컬 E2E (주문 제출 → 오더북 반영 → WS 스트림): ✅ 검증 완료
+**완료:** F-0~F-4 (전체 프론트엔드 MVP) + E-1~E-2, F-1~F-2, G-1 (버그 수정 + E2E 검증)
+- TypeScript 타입체크: ✅ 클린 (서버 + 프론트 모두)
+- CLI E2E (sign → POST /orders → 오더북 반영): ✅ 검증 완료
+- 커밋 이력: `37f6455` (F-2), `1176cd2` (reviver), `3e3f77a` (EIP-712 domain)
+- 서버 커밋 이력: `2339d1d` (E+F), `4eab073` (G-1 fundingEngine)
+
+**G-1 브라우저 MetaMask E2E: 아직 실행 필요** (아래 Phase G 참조)
 
 ### 로컬 환경 상태 (Anvil — 재시작 시 초기화)
 ```
@@ -93,7 +97,22 @@ BigInt 직렬화에 bigintReplacer 적용 필수
 
 ## Phase G — MetaMask 브라우저 E2E 테스트 (1일)
 
-### [G-1] 🟠 MetaMask에 Anvil 네트워크 추가
+### 수정 완료 항목 (G-1 서버/프론트 버그)
+- ✅ `index.ts`: fundingEngine + getMarkPrice/getIndexPrice buildServer에 전달 (커밋 `4eab073`)
+- ✅ `funding.ts`: rate bigint 직렬화 (1e18 스케일), nextFundingAt 추가
+- ✅ `reviver.ts`: BIGINT_KEYS에 'rate' 추가 (커밋 `1176cd2`)
+- ✅ `domain.ts`: EIP-712 domain name 'HyperKRW' → 'KRW DEX' (커밋 `3e3f77a`)
+- ✅ CLI E2E: sign-order.mjs → POST /orders → orderId 반환 확인
+
+### 실제 Anvil 토큰 주소 (중요!)
+```
+wBTC (base):  0xc6e7DF5E7b4f2A278906862b61205850344D4e7d  ← 수동 등록된 MockwBTC
+KRW  (quote): 0x5FbDB2315678afecb367f032d93F642f64180aa3  ← Deploy.s.sol의 MockKRW (krwStablecoin)
+pairId: 0xc6e7DF5E7b4f2A278906862b61205850344D4e7d/0x5FbDB2315678afecb367f032d93F642f64180aa3
+```
+⚠️ Anvil 재시작 시 상태 초기화 — 재시작 후 반드시 아래 재시작 방법 실행
+
+### [G-2] 🟠 MetaMask에 Anvil 네트워크 추가
 ```
 네트워크 이름: HyperEVM Local
 RPC URL: http://127.0.0.1:8545
@@ -101,21 +120,23 @@ Chain ID: 998
 통화 기호: HYPE
 ```
 
-### [G-2] 🟠 Anvil 테스트 계정 MetaMask import
+### [G-3] 🟠 Anvil 테스트 계정 MetaMask import
 ```
 Private Key: 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
 Address: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
 잔액: 10,000 HYPE
 ```
 
-### [G-3] 🟠 브라우저 E2E 체크리스트
+### [G-4] 🟠 브라우저 E2E 체크리스트
 - [ ] http://localhost:3001 접속 → 자동으로 wBTC/KRW 페이지 이동 확인
-- [ ] MetaMask 지갑 연결
-- [ ] "API 키 등록 필요" 배너 클릭 → ApiKeyModal → API 키 발급
-- [ ] 지정가 매수 주문 입력 (가격: 50,000,000 / 수량: 0.001)
+- [ ] 오더북에 기존 CLI 제출 주문 (65,000,000 KRW bid) 표시 확인
+- [ ] MetaMask 지갑 연결 (RainbowKit 버튼)
+- [ ] "API 키 등록 필요" 배너 → ApiKeyModal → API 키 발급 (VITE_TESTNET_ADMIN_API_KEY 사용)
+- [ ] 지정가 매수 주문 입력 (가격: 65,000,000 / 수량: 0.001)
 - [ ] "매수 주문" 버튼 → MetaMask 서명 팝업 → 확인
-- [ ] 오더북에 매수 호가 반영 확인
+- [ ] 오더북 매수 호가 반영 확인 (WS 업데이트)
 - [ ] BottomTabs 미체결 주문 탭에서 주문 확인
+- [ ] PositionPanel 마켓 정보 (펀딩 레이트, 마크 가격) 표시 확인
 
 ---
 
@@ -211,9 +232,21 @@ cd krw-dex-web && npm run dev
 ### BigInt 경계 (절대 준수)
 - `Number()` 변환 허용: CandleChart.tsx, format.ts 내부만
 - 서버 응답 → `bigintReviver` 자동 적용 (api/client.ts)
+- BIGINT_KEYS에 `'rate'` 포함 (funding rate 1e18 스케일)
 
 ### EIP-712 9-field (절대 변경 금지)
 - `src/lib/eip712/types.ts` ORDER_TYPES isLiquidation 추가 금지
+- **domain name: `'KRW DEX'`** (OrderSettlement.sol `__EIP712_init("KRW DEX", "1")`)
+- 이전에 'HyperKRW'로 잘못 설정 → 모든 서명 검증 실패 → 3e3f77a 커밋으로 수정
+
+### Anvil 실제 주소 (중요! 이전 session의 실수 정정)
+```
+krwStablecoin = 0x5FbDB2315678afecb367f032d93F642f64180aa3  (KRW, not wBTC!)
+wBTC (수동 등록) = 0xc6e7DF5E7b4f2A278906862b61205850344D4e7d
+PairRegistry proxy = 0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0
+OrderSettlement proxy = 0x610178dA211FEF7D417bC0e6FeD39F05609AD788
+```
+초기 세션에서 0x5FbDB...를 wBTC로 착각 (실제로는 Deploy.s.sol 첫 번째 MockERC20 = KRW)
 
 ### usePairs 구현 방식
 - 서버 `/pairs` 없음 → PairRegistry 컨트랙트 직접 읽기
@@ -222,3 +255,8 @@ cd krw-dex-web && npm run dev
 ### @fastify/static 버전 (서버)
 - v9.0.0 → v7.0.4 다운그레이드 (fastify v4 호환)
 - package.json에 `^7.0.0`으로 이미 반영됨
+
+### fundingEngine buildServer 연결 주의
+- `index.ts`에서 `fundingEngine`, `getMarkPrice`, `getIndexPrice` 반드시 buildServer에 전달
+- 미전달 시 `GET /funding/:pair` → 404 (조건부 등록)
+- `funding.ts` rate: number → `Math.round(rate * 1e18)` bigint string 변환 필수
