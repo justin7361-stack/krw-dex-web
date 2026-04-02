@@ -10,9 +10,18 @@
 - Phase J (구조): 3탭 BottomNav (Market/Trade/Account) — 커밋 `43e6ecf`
   - MarketPage: 페어 목록 + SVG 스파클라인 + 전체 캔들차트
   - AccountPage: 증거금 입출금 + 포지션 요약 + API키 관리
+- Phase K (모바일): 모바일 반응형 레이아웃 — 커밋 `7eeb221`
+  - TradingPage: 4탭 패널 전환 (차트/호가창/주문/정보)
+  - MarketPage: 모바일 풀너비 + 탭으로 트레이드 페이지 이동
+  - TickerBar: 모바일에서 2차 통계 숨김 (고가/저가/거래량/마크/인덱스)
+  - TopNav: 모바일 컴팩트 ConnectButton (아바타 모드)
+- Phase L (추가기능): Amend UI + 청산 리스크 표시 — 커밋 `6a9a263`
+  - BottomTabs 미체결 주문 인라인 수정 폼 (가격/수량, PATCH /orders/:orderId)
+  - useAmendOrder 훅 신규 추가
+  - PositionsTable 마진 사용 비율 바 + 청산 거리 % 프로그레스 바
 
 **TypeScript:** ✅ 클린 (타입에러 0)
-**최신 커밋:** `43e6ecf` (master)
+**최신 커밋:** `6a9a263` (master)
 
 ---
 
@@ -66,10 +75,11 @@ URL: http://localhost:3001
 ```
 
 ### 3. 🟡 추가 UI/기능 작업
-- **주문 수정(Amend)** UI — `PATCH /orders/:nonce`
-- **조건부 주문(Stop-Limit)** 폼
-- **청산 시뮬레이션** (청산가 근접 경고 개선)
-- **모바일 반응형** 레이아웃 (현재 데스크탑 전용)
+- ✅ **주문 수정(Amend)** UI — PATCH /orders/:orderId (Phase L 완료)
+- ✅ **모바일 반응형** 레이아웃 (Phase K 완료)
+- ✅ **청산 리스크 표시** — 마진 비율 바 + 청산 거리 % (Phase L 완료)
+- **조건부 주문(Stop-Limit)** 폼 — 다음 단계
+- **WS 연결 상태 표시** — TickerBar 모바일에 WsStatusBadge 추가 검토
 
 ### 4. 🟡 테스트 보강
 - 훅 통합 테스트 (usePairs, useSubmitOrder mock)
