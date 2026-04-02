@@ -32,7 +32,7 @@ export function TopNav() {
   }
 
   return (
-    <nav className="flex items-center h-12 px-4 gap-3 border-b border-color-border bg-color-layer-1 shrink-0 z-10">
+    <nav className="flex items-center h-12 px-3 notMobile:px-4 gap-2 notMobile:gap-3 border-b border-color-border bg-color-layer-1 shrink-0 z-10">
 
       {/* Logo */}
       <Link to="/market" className="flex items-center gap-1.5 mr-1">
@@ -55,11 +55,11 @@ export function TopNav() {
 
       <div className="flex-1" />
 
-      {/* Wallet connect */}
+      {/* Wallet connect — compact on mobile */}
       <ConnectButton
         showBalance={false}
-        chainStatus="icon"
-        accountStatus="address"
+        chainStatus={{ smallScreen: 'none', largeScreen: 'icon' }}
+        accountStatus={{ smallScreen: 'avatar', largeScreen: 'address' }}
       />
     </nav>
   );

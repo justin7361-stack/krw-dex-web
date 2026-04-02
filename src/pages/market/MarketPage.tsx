@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { CandleChart } from '@/components/trading/CandleChart';
@@ -51,12 +51,13 @@ function Sparkline({ candles, positive }: { candles: Candle[]; positive: boolean
 // ─── MarketPairRow ─────────────────────────────────────────────────────────────
 
 interface RowProps {
-  pair:     Pair;
-  selected: boolean;
-  onSelect: (pairId: string) => void;
+  pair:       Pair;
+  selected:   boolean;
+  onSelect:   (pairId: string) => void;
+  onNavigate: (pairId: string) => void;
 }
 
-function MarketPairRow({ pair, selected, onSelect }: RowProps) {
+function MarketPairRow({ pair, selected, onSelect, onNavigate }: RowProps) {
   const { data: trades  } = useTrades(pair.pairId);
   const { data: candles } = useCandles(pair.pairId, '1d');
 
@@ -72,9 +73,19 @@ function MarketPairRow({ pair, selected, onSelect }: RowProps) {
   const changePct  = changeBps !== null ? changeBps / 100 : null;
   const isPositive = (changePct ?? 0) >= 0;
 
+  function handleClick() {
+    // On mobile (≤600px): navigate directly to trade page
+    // On desktop: select the pair to show in the right panel
+    if (window.innerWidth < 600) {
+      onNavigate(pair.pairId);
+    } else {
+      onSelect(pair.pairId);
+    }
+  }
+
   return (
     <button
-      onClick={() => onSelect(pair.pairId)}
+      onClick={handleClick}
       className={`w-full flex items-center gap-3 px-4 py-3 border-b border-color-border transition-colors text-left ${
         selected
           ? 'bg-color-layer-3 border-l-2 border-l-color-accent'
@@ -155,6 +166,11 @@ export function MarketPage() {
     setSelectedPairId(pairId);
   }
 
+  const handleNavigate = useCallback((pairId: string) => {
+    setSelectedPairId(pairId);
+    navigate(`/trade/${pairIdToSlug(pairId)}`);
+  }, [navigate, setSelectedPairId]);
+
   function goTrade() {
     if (!selectedPairId) return;
     navigate(`/trade/${pairIdToSlug(selectedPairId)}`);
@@ -163,8 +179,8 @@ export function MarketPage() {
   return (
     <div className="flex h-full">
 
-      {/* ── Left: pair list ──────────────────────────────────────── */}
-      <div className="w-[280px] flex-shrink-0 border-r border-color-border flex flex-col overflow-hidden">
+      {/* ── Left: pair list (full-width on mobile) ────────────────── */}
+      <div className="w-full notMobile:w-[280px] flex-shrink-0 notMobile:border-r border-color-border flex flex-col overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-2.5 border-b border-color-border">
           <span className="text-small font-semibold text-color-text-1">마켓</span>
@@ -207,14 +223,15 @@ export function MarketPage() {
                 pair={pair}
                 selected={pair.pairId === selectedPairId}
                 onSelect={handleSelect}
+                onNavigate={handleNavigate}
               />
             ))
           )}
         </div>
       </div>
 
-      {/* ── Right: chart panel ───────────────────────────────────── */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      {/* ── Right: chart panel (desktop only) ───────────────────── */}
+      <div className="hidden notMobile:flex flex-1 flex-col min-w-0 overflow-hidden">
         {selectedPairId ? (
           <>
             {/* Ticker bar */}

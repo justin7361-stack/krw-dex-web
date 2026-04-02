@@ -39,7 +39,7 @@ interface StatCellProps {
 
 function StatCell({ label, value, valueClassName = 'text-color-text-2', sub, subClassName }: StatCellProps) {
   return (
-    <div className="flex flex-col justify-center px-3 border-r border-color-border h-full shrink-0 min-w-[80px]">
+    <div className="hidden notMobile:flex flex-col justify-center px-3 border-r border-color-border h-full shrink-0 min-w-[80px]">
       <span className="text-tiny text-color-text-0 leading-none mb-0.5">{label}</span>
       <span className={`text-mini tabular-nums font-medium leading-none ${valueClassName}`}>{value}</span>
       {sub && (
@@ -149,8 +149,8 @@ export function TickerBar({ pairId, baseSymbol, quoteSymbol }: Props) {
       {/* Spacer */}
       <div className="flex-1" />
 
-      {/* WS status — far right */}
-      <div className="flex items-center px-3 shrink-0 border-l border-color-border">
+      {/* WS status — far right, desktop only */}
+      <div className="hidden notMobile:flex items-center px-3 shrink-0 border-l border-color-border">
         <WsStatusBadge pairId={pairId} />
       </div>
     </div>
