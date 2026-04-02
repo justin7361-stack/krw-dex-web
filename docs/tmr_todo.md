@@ -31,9 +31,9 @@ Anvil:   http://127.0.0.1:8545  (chainId=998)
 
 ---
 
-## Phase E — 버그 수정 (다음 세션 즉시)
+## Phase E — 버그 수정 ✅ 완료 (커밋 `2339d1d`)
 
-### [E-1] 🔴 서버 BigInt 직렬화 에러 (CRITICAL)
+### [E-1] ✅ 서버 BigInt 직렬화 에러 (CRITICAL)
 **파일:** `krw-dex-server/src/api/routes/orders.ts`
 **현상:** `GET /orders/:address` → `"Cannot serialize BigInt"`
 **수정:** GET 핸들러에서 bigintReplacer 적용
@@ -44,7 +44,7 @@ const bigintReplacer = (_: string, v: unknown) =>
 ```
 **영향:** BottomTabs 미체결 주문 탭, PositionPanel 전체 영향
 
-### [E-2] 🔴 서버 마진 deposit API 없음 (CRITICAL)
+### [E-2] ✅ 서버 마진 deposit API 없음 (CRITICAL)
 **파일:** `krw-dex-server/src/api/routes/` (신규 추가)
 **현상:** `marginMode` 포함 주문 → `"Insufficient margin"` 에러
 **원인:** in-memory MarginAccount에 잔액 없음
@@ -59,9 +59,9 @@ GET  /margin/:address
 
 ---
 
-## Phase F — 기능 완성 (2~3일)
+## Phase F — 기능 완성 ✅ 완료 (커밋 `2339d1d` / `37f6455`)
 
-### [F-1] 🟠 서버 `GET /positions/:address` 엔드포인트 추가
+### [F-1] ✅ 서버 `GET /positions/:address` 엔드포인트 추가
 **파일:** `krw-dex-server/src/api/routes/positions.ts` (신규)
 **현상:** PositionPanel이 포지션 데이터 못 가져옴 → placeholder
 **구현:**
@@ -70,13 +70,13 @@ GET /positions/:address → PositionTracker.getAll().filter(p => p.maker === add
 ```
 BigInt 직렬화에 bigintReplacer 적용 필수
 
-### [F-2] 🟠 BottomTabs "체결 내역" 탭 연동
+### [F-2] ✅ BottomTabs "체결 내역" 탭 연동
 **파일:** `src/components/trading/BottomTabs.tsx`
 **현상:** 체결 내역 탭 클릭해도 placeholder
 **구현:** `GET /trades/{pair}` → 체결 내역 테이블 표시
 **참고:** `useTrades.ts` 훅 이미 구현됨, UI 연결만 필요
 
-### [F-3] 🟠 TopNav 페어 셀렉터 UI
+### [F-3] 🔲 TopNav 페어 셀렉터 UI (다음 세션)
 **파일:** `src/components/layout/TopNav.tsx`
 **현상:** 페어 변경 UI 없음, 토큰 주소 앞 8자리만 표시
 **구현:**
