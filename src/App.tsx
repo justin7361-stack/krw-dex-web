@@ -10,7 +10,9 @@ import { usePairs } from '@/hooks/api/usePairs';
 const TradingPage  = lazy(() => import('@/pages/trade/TradingPage').then(m => ({ default: m.TradingPage })));
 const MarketPage   = lazy(() => import('@/pages/market/MarketPage').then(m => ({ default: m.MarketPage })));
 const AccountPage  = lazy(() => import('@/pages/account/AccountPage').then(m => ({ default: m.AccountPage })));
-const SwapPage     = lazy(() => import('@/pages/swap/SwapPage').then(m => ({ default: m.SwapPage })));
+const SwapPage      = lazy(() => import('@/pages/swap/SwapPage').then(m => ({ default: m.SwapPage })));
+const AdminPage     = lazy(() => import('@/pages/admin/AdminPage').then(m => ({ default: m.AdminPage })));
+const NotFoundPage  = lazy(() => import('@/pages/NotFoundPage').then(m => ({ default: m.NotFoundPage })));
 
 // Simple loading fallback — keep it minimal (no heavy component)
 function PageLoader() {
@@ -58,6 +60,12 @@ export default function App() {
 
               {/* Swap kept at its own route (accessible from account) */}
               <Route path="/swap/page" element={<SwapPage />} />
+
+              {/* Admin */}
+              <Route path="/admin" element={<AdminPage />} />
+
+              {/* 404 catch-all */}
+              <Route path="*" element={<NotFoundPage />} />
             </Route>
           </Routes>
         </Suspense>
