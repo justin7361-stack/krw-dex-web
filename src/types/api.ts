@@ -139,6 +139,8 @@ export type WsMessageType =
   | 'orderbook.update'
   | 'trades.recent'
   | 'order.status'
+  | 'markprice.update'
+  | 'funding.update'
   | 'ping'
   | 'pong';
 
@@ -152,3 +154,27 @@ export interface WsMessage<T = unknown> {
 export type WsOrderbookSnapshot = WsMessage<OrderbookSnapshot>;
 export type WsTradesUpdate      = WsMessage<Trade[]>;
 export type WsOrderStatus       = WsMessage<{ orderId: string; status: OrderStatus }>;
+
+// ─── Mark price & funding WS payload types ────────────────────────────────────
+// Note: markPrice/indexPrice/rate fields are strings on the wire but are
+// converted to bigint by bigintReviver in JSON.parse (useWebSocket.ts).
+// The string type here documents the wire format; handlers cast as needed.
+
+export interface WsMarkPriceData {
+  pairId:     string;
+  markPrice:  string;   // bigint as string (converted by reviver at runtime)
+  indexPrice: string;   // bigint as string (converted by reviver at runtime)
+  ts:         number;
+}
+
+export interface WsFundingData {
+  pairId:        string;
+  rate:          string;   // bigint as string, scaled 1e18 (converted by reviver)
+  markPrice:     string;   // bigint as string (converted by reviver at runtime)
+  indexPrice:    string;   // bigint as string (converted by reviver at runtime)
+  nextFundingAt: number;
+  ts:            number;
+}
+
+export type WsMarkPriceUpdate = WsMessage<WsMarkPriceData>;
+export type WsFundingUpdate   = WsMessage<WsFundingData>;
