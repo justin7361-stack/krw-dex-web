@@ -1,6 +1,6 @@
 # HyperKRW DEX Web — 다음 작업 목록
 
-## 현재 상태 (2026-04-06 갱신)
+## 현재 상태 (2026-04-06 세션 3 갱신)
 
 **완료된 전체 작업 (3개 레포):**
 
@@ -38,6 +38,17 @@
   - P-6: 청산 거리 방향 수정 — 롱(mark < liqPrice), 숏(mark > liqPrice) 구분
   - 60/60 Vitest tests 통과, tsc --noEmit 클린
 
+**세션 3 완료 (프론트엔드 — 2026-04-06):**
+- WS markprice.update 실시간 — `3427d9d` (useFundingRate WS 캐시 업데이트, useMarkPrice 훅)
+- usePositions WS 실시간 업데이트 — `af0058e` (position.update → TanStack 캐시 즉시 반영)
+- Vite 코드 스플리팅 — `5417717` (manualChunks 4개, React.lazy 모든 페이지)
+- OrderForm/PositionPanel markPrice WS 연동 — `9c2f9ac`
+- Admin 서킷브레이커 UI + 404 페이지 — `b20ac39`
+- **Playwright E2E 테스트 — `b9015ca`** (playwright.config.ts + e2e/ 3개 스펙)
+  - navigation.spec.ts: home→/market 리다이렉트, 404, /admin, /trade
+  - health.spec.ts: API health check (서버 미실행 시 graceful skip)
+  - orderbook.spec.ts: 거래 페이지 스모크 테스트
+
 **이전 완료 (프론트엔드):**
 - F-0~F-4: MVP 전체 — `0c8626c`
 - Phase H: Vitest 단위 테스트 60개 — `88ade0d`
@@ -71,7 +82,17 @@ Anvil:   http://127.0.0.1:8545  (chainId=998)
 
 ---
 
-## 다음 단계 — Phase O: 인프라 레이어 구축 🟠
+## ✅ Phase O~R-4 전부 완료 (서버/컨트랙트/인프라)
+
+Phase O (PostgreSQL, Redis, Ponder, RPC 폴백, Traefik, Docker, OFAC), Phase R-2 (VaultClient), R-3 (Gnosis Safe), R-4 (Timelock), R-7 (CircuitBreaker), OpenAPI/Swagger, WalletRateLimiter — 모두 완료.
+
+**다음 작업: Phase Q (테스트넷 배포) — 사용자 직접 실행 필요**
+
+---
+
+## 🗑️ (하위 호환성 보존 — 이전 상태, 이미 완료된 내용)
+
+### Phase O: 인프라 레이어 구축 (완료됨)
 
 **선결 조건:** Phase M+N 완료 ✅
 
