@@ -6,6 +6,7 @@ import { useTradingStore } from '@/store/tradingStore';
 import { useAuthStore } from '@/store/authStore';
 import { usePair } from '@/hooks/api/usePairs';
 import { useFundingRate } from '@/hooks/api/useFundingRate';
+import { useMarkPrice } from '@/hooks/ws/useMarkPrice';
 import { usePositions } from '@/hooks/api/usePositions';
 import { useNextNonce } from '@/hooks/chain/useNonce';
 import { useSubmitOrder } from '@/hooks/mutations/useSubmitOrder';
@@ -41,7 +42,11 @@ export function OrderForm({ pairId }: Props) {
 
   const { data: pair }    = usePair(pairId);
   const { data: funding } = useFundingRate(pairId);
+  const { markPrice: wsMarkPrice } = useMarkPrice(pairId);
   const { data: posData } = usePositions(isConnected ? (address ?? '') : '');
+
+  // Prefer real-time WS mark price (5s updates); fall back to REST funding data
+  const effectiveMarkPrice = wsMarkPrice || funding?.markPrice || 0n;
   const { nextNonce }     = useNextNonce(isConnected ? address : undefined);
   const submitOrder       = useSubmitOrder();
 
@@ -54,7 +59,7 @@ export function OrderForm({ pairId }: Props) {
 
     let priceScaled: bigint;
     if (form.orderType === 'market') {
-      priceScaled = funding?.markPrice ?? 0n;
+      priceScaled = effectiveMarkPrice;
     } else {
       priceScaled = form.priceInput ? parseScaled(form.priceInput) : 0n;
     }
@@ -63,7 +68,7 @@ export function OrderForm({ pairId }: Props) {
     // cost (KRW, scaled) = price * amount / 1e18
     const SCALE = 10n ** 18n;
     return (priceScaled * amount) / SCALE;
-  }, [form.amountInput, form.priceInput, form.orderType, funding?.markPrice]);
+  }, [form.amountInput, form.priceInput, form.orderType, effectiveMarkPrice]);
 
   // ─── Percentage buttons ────────────────────────────────────────────────────
   const handlePctClick = (pct: number) => {
@@ -73,7 +78,7 @@ export function OrderForm({ pairId }: Props) {
     // Determine effective price
     let priceScaled: bigint;
     if (form.orderType === 'market') {
-      priceScaled = funding?.markPrice ?? 0n;
+      priceScaled = effectiveMarkPrice;
     } else {
       priceScaled = form.priceInput ? parseScaled(form.priceInput) : 0n;
     }
@@ -248,10 +253,10 @@ export function OrderForm({ pairId }: Props) {
         )}
 
         {/* Market price display */}
-        {form.orderType === 'market' && funding && (
+        {form.orderType === 'market' && effectiveMarkPrice > 0n && (
           <div className="flex items-center justify-between px-3 py-1.5 rounded-md bg-color-layer-3 text-tiny">
             <span className="text-color-text-0">마크 가격</span>
-            <span className="tabular-nums text-color-text-1">{formatKRW(funding.markPrice, 0)}</span>
+            <span className="tabular-nums text-color-text-1">{formatKRW(effectiveMarkPrice, 0)}</span>
           </div>
         )}
 

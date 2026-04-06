@@ -1,6 +1,7 @@
 import { useAccount } from 'wagmi';
 
 import { useFundingRate } from '@/hooks/api/useFundingRate';
+import { useMarkPrice } from '@/hooks/ws/useMarkPrice';
 import { usePositions, type PositionEntry } from '@/hooks/api/usePositions';
 import { formatKRW, formatPercent, formatAmount } from '@/lib/bigint/format';
 
@@ -11,7 +12,11 @@ interface Props {
 export function PositionPanel({ pairId }: Props) {
   const { address, isConnected } = useAccount();
   const { data: funding } = useFundingRate(pairId);
+  const { markPrice: wsMarkPrice } = useMarkPrice(pairId);
   const { data: posData } = usePositions(address ?? '');
+
+  // Prefer real-time WS mark price (5s updates); fall back to REST funding data
+  const effectiveMarkPrice = wsMarkPrice || funding?.markPrice;
 
   // Filter positions relevant to the current base token
   const baseToken = pairId.split('/')[0] ?? '';
@@ -41,7 +46,7 @@ export function PositionPanel({ pairId }: Props) {
           <div className="spacedRow">
             <span className="text-tiny text-color-text-0">마크 가격</span>
             <span className="text-tiny tabular-nums text-color-text-2">
-              {formatKRW(funding.markPrice)}
+              {effectiveMarkPrice ? formatKRW(effectiveMarkPrice) : '—'}
             </span>
           </div>
           <div className="spacedRow">
@@ -81,7 +86,7 @@ export function PositionPanel({ pairId }: Props) {
               <PositionCard
                 key={`${pos.maker}-${pos.pairId}`}
                 pos={pos}
-                markPrice={funding?.markPrice}
+                markPrice={effectiveMarkPrice}
               />
             ))}
           </div>
