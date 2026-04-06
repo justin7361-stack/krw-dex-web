@@ -286,12 +286,22 @@ function FilledOrdersTable({ orders }: { orders: Order[] }) {
 /**
  * Visual bar showing how far current mark price is from liquidation.
  * Green → yellow → red as distance shrinks (≤30% → ≤10% → ≤5%).
+ *
+ * P-6 fix: direction must account for long vs short:
+ *   Long:  liq when markPrice < liqPrice → distance = (markPrice - liqPrice) / liqPrice
+ *   Short: liq when markPrice > liqPrice → distance = (liqPrice - markPrice) / liqPrice
  */
-function LiqRiskBar({ markPrice, liquidationPrice }: { markPrice: bigint; liquidationPrice: bigint }) {
+function LiqRiskBar({
+  markPrice, liquidationPrice, isLong,
+}: { markPrice: bigint; liquidationPrice: bigint; isLong: boolean }) {
   if (liquidationPrice === 0n || markPrice === 0n) return null;
 
-  const diff     = markPrice > liquidationPrice ? markPrice - liquidationPrice : liquidationPrice - markPrice;
-  const distPct  = Number((diff * 10000n) / liquidationPrice) / 100; // e.g. 8.5
+  // Signed distance: positive = safe, negative = already past liq price
+  const signedDiff = isLong
+    ? markPrice - liquidationPrice          // long: safe when mark > liq
+    : liquidationPrice - markPrice;         // short: safe when liq > mark
+
+  const distPct = Number((signedDiff * 10000n) / liquidationPrice) / 100;
 
   // Fill: higher distance = more green fill; clamp 0-100
   const fillPct  = Math.min(100, Math.max(0, distPct));
@@ -423,7 +433,7 @@ function PositionsTable({
                   {/* Liquidation distance bar */}
                   <td className="px-3 py-2">
                     {pos.markPrice > 0n && pos.liquidationPrice > 0n ? (
-                      <LiqRiskBar markPrice={pos.markPrice} liquidationPrice={pos.liquidationPrice} />
+                      <LiqRiskBar markPrice={pos.markPrice} liquidationPrice={pos.liquidationPrice} isLong={isLong} />
                     ) : (
                       <span className="text-tiny text-color-text-0">—</span>
                     )}

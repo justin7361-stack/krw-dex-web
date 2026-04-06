@@ -12,6 +12,7 @@ import { useSubmitOrder } from '@/hooks/mutations/useSubmitOrder';
 import { buildLimitOrder, buildMarketOrder } from '@/lib/eip712/buildOrder';
 import { parseScaled, roundDown, formatKRW, formatAmount } from '@/lib/bigint/format';
 import { ApiKeyModal } from '@/components/modals/ApiKeyModal';
+import { useToast, ToastContainer } from '@/components/ui/Toast';
 import type { Address } from 'viem';
 
 interface Props {
@@ -32,6 +33,7 @@ export function OrderForm({ pairId }: Props) {
   const apiKey = useAuthStore((s) => s.apiKey);
 
   const [apiKeyModalOpen, setApiKeyModalOpen] = useState(false);
+  const { toasts, showToast, dismiss }        = useToast();
 
   const form          = useTradingStore((s) => s.form);
   const setFormField  = useTradingStore((s) => s.setFormField);
@@ -150,10 +152,12 @@ export function OrderForm({ pairId }: Props) {
         marginMode:  form.marginMode,
         timeInForce: form.timeInForce,
       });
+      showToast('주문이 접수되었습니다', 'success');
       resetForm();
     } catch (err) {
       console.error('주문 실패:', err);
-      alert('주문 제출에 실패했습니다. 콘솔을 확인하세요.');
+      const msg = err instanceof Error ? (err.message.split('\n')[0] ?? '주문 제출 실패') : '주문 제출 실패';
+      showToast(msg, 'error');
     }
   };
 
@@ -173,6 +177,7 @@ export function OrderForm({ pairId }: Props) {
   return (
     <>
       <ApiKeyModal isOpen={apiKeyModalOpen} onClose={() => setApiKeyModalOpen(false)} />
+      <ToastContainer toasts={toasts} onDismiss={dismiss} />
 
       <div className="flex flex-col h-full p-4 gap-3 overflow-y-auto">
 

@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useMediaQuery, MOBILE_QUERY } from '@/hooks/useMediaQuery';
 
 import { CandleChart } from '@/components/trading/CandleChart';
 import { TickerBar } from '@/components/trading/TickerBar';
@@ -58,6 +59,7 @@ interface RowProps {
 }
 
 function MarketPairRow({ pair, selected, onSelect, onNavigate }: RowProps) {
+  const isMobile = useMediaQuery(MOBILE_QUERY);
   const { data: trades  } = useTrades(pair.pairId);
   const { data: candles } = useCandles(pair.pairId, '1d');
 
@@ -74,9 +76,8 @@ function MarketPairRow({ pair, selected, onSelect, onNavigate }: RowProps) {
   const isPositive = (changePct ?? 0) >= 0;
 
   function handleClick() {
-    // On mobile (≤600px): navigate directly to trade page
-    // On desktop: select the pair to show in the right panel
-    if (window.innerWidth < 600) {
+    // On mobile: navigate directly to trade page; on desktop: select in right panel
+    if (isMobile) {
       onNavigate(pair.pairId);
     } else {
       onSelect(pair.pairId);

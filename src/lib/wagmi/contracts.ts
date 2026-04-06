@@ -20,4 +20,5 @@ export const CONTRACT_ADDRESSES = {
   pairRegistry:    requireAddress('VITE_PAIR_REGISTRY_ADDRESS'),
   marginRegistry:  requireAddress('VITE_MARGIN_REGISTRY_ADDRESS'),
   hybridPool:      requireAddress('VITE_HYBRID_POOL_ADDRESS'),
+  krwToken:        requireAddress('VITE_KRW_TOKEN_ADDRESS'),
 } as const;

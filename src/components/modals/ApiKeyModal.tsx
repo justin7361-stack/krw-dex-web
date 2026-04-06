@@ -65,7 +65,7 @@ export function ApiKeyModal({ isOpen, onClose }: Props) {
       }
 
       // Server returns { registered: true } — we save the key we generated
-      setApiKey(generatedKey, 'OPERATOR', address);
+      setApiKey(generatedKey, 'trade', address);
       setSuccess(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : '알 수 없는 오류');

@@ -65,24 +65,25 @@ function MarginForm() {
   const [tab, setTab]       = useState<'deposit' | 'withdraw'>('deposit');
 
   const marginAddr = CONTRACT_ADDRESSES.marginRegistry;
+  const krwAddr    = CONTRACT_ADDRESSES.krwToken;
 
   const amountScaled = amount ? parseScaled(amount) : 0n;
 
-  // Check KRW allowance for deposit
+  // Check KRW allowance for the MarginRegistry (P-1 fix: was reading from wrong contract)
   const { data: allowance } = useReadContract({
-    address: CONTRACT_ADDRESSES.marginRegistry,  // assuming MarginRegistry has KRW addr
-    abi: ERC20_ABI,
+    address: krwAddr,
+    abi:     ERC20_ABI,
     functionName: 'allowance',
-    args: address && marginAddr ? [address, marginAddr] : undefined,
-    query: { enabled: !!address },
+    args: address ? [address, marginAddr] : undefined,
+    query: { enabled: !!address && !!krwAddr },
   });
 
   const needsApproval = tab === 'deposit'
     && (allowance as bigint | undefined ?? 0n) < amountScaled
     && amountScaled > 0n;
 
-  const { writeContract: approveWrite, isPending: isApproving } = useWriteContract();
-  const { writeContract: marginWrite,  isPending: isMarginPending } = useWriteContract();
+  const { writeContract: approveWrite, isPending: isApproving, error: approveError } = useWriteContract();
+  const { writeContract: marginWrite,  isPending: isMarginPending, error: marginError } = useWriteContract();
 
   const handleDeposit = () => {
     if (!address || amountScaled === 0n) return;
@@ -162,8 +163,13 @@ function MarginForm() {
         {tab === 'deposit' ? (
           needsApproval ? (
             <button
-              onClick={() => {}}
-              disabled={isApproving}
+              onClick={() => approveWrite({
+                address:      krwAddr,
+                abi:          ERC20_ABI,
+                functionName: 'approve',
+                args:         [marginAddr, amountScaled],
+              })}
+              disabled={isApproving || amountScaled === 0n}
               className="w-full py-2.5 rounded-lg bg-color-warning text-black text-small font-semibold disabled:opacity-50"
             >
               {isApproving ? '승인 중...' : 'KRW 사용 승인'}
@@ -185,6 +191,13 @@ function MarginForm() {
           >
             {isMarginPending ? '처리 중...' : '증거금 출금'}
           </button>
+        )}
+
+        {/* P-2: Error display */}
+        {(approveError || marginError) && (
+          <p className="text-tiny text-color-negative mt-1 text-center">
+            {(approveError ?? marginError)?.message?.split('\n')[0] ?? '오류가 발생했습니다'}
+          </p>
         )}
       </div>
     </div>

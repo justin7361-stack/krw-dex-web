@@ -5,7 +5,10 @@ import { persist } from 'zustand/middleware';
 // Persisted to localStorage.
 // Stores the HyperKRW server API key for the connected wallet.
 
-type KeyRole = 'ADMIN' | 'OPERATOR' | 'READ_ONLY';
+// P-4 fix: align with server ApiKeyRole ('read' | 'trade') from traderAuth.ts
+// Previously used frontend-only enum values ('ADMIN'|'OPERATOR'|'READ_ONLY')
+// that didn't match server responses, causing role checks to silently fail.
+export type KeyRole = 'read' | 'trade';
 
 interface AuthState {
   // Wallet-bound API key (X-Api-Key header)
