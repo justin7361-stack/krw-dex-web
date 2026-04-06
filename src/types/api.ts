@@ -141,6 +141,7 @@ export type WsMessageType =
   | 'order.status'
   | 'markprice.update'
   | 'funding.update'
+  | 'position.update'
   | 'ping'
   | 'pong';
 
@@ -178,3 +179,14 @@ export interface WsFundingData {
 
 export type WsMarkPriceUpdate = WsMessage<WsMarkPriceData>;
 export type WsFundingUpdate   = WsMessage<WsFundingData>;
+
+export interface WsPositionData {
+  maker:      string;
+  pairId:     string;
+  size:       string;   // bigint as string
+  margin:     string;
+  mode:       string;
+  entryPrice: string;
+}
+
+export type WsPositionUpdate = WsMessage<WsPositionData>;
