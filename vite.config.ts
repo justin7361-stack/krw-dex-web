@@ -10,6 +10,24 @@ export default defineConfig({
       '@': path.resolve(__dirname, 'src'),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Wallet + chain infrastructure (largest, rarely changes)
+          'vendor-wallet': ['wagmi', 'viem', '@rainbow-me/rainbowkit'],
+          // React core
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          // Data fetching
+          'vendor-query': ['@tanstack/react-query'],
+          // Charts (only needed on /trade and /market)
+          'vendor-charts': ['lightweight-charts'],
+        },
+      },
+    },
+    // Raise warning limit slightly — we've addressed the main chunks
+    chunkSizeWarningLimit: 600,
+  },
   server: {
     port: 3001,
     proxy: {

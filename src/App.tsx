@@ -1,12 +1,25 @@
+import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { BrowserRouter } from 'react-router-dom';
 
 import { AppShell } from '@/components/layout/AppShell';
-import { MarketPage } from '@/pages/market/MarketPage';
-import { TradingPage } from '@/pages/trade/TradingPage';
-import { SwapPage } from '@/pages/swap/SwapPage';
-import { AccountPage } from '@/pages/account/AccountPage';
+import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 import { usePairs } from '@/hooks/api/usePairs';
+
+// Lazy-loaded pages — loaded on demand, not in the initial bundle
+const TradingPage  = lazy(() => import('@/pages/trade/TradingPage').then(m => ({ default: m.TradingPage })));
+const MarketPage   = lazy(() => import('@/pages/market/MarketPage').then(m => ({ default: m.MarketPage })));
+const AccountPage  = lazy(() => import('@/pages/account/AccountPage').then(m => ({ default: m.AccountPage })));
+const SwapPage     = lazy(() => import('@/pages/swap/SwapPage').then(m => ({ default: m.SwapPage })));
+
+// Simple loading fallback — keep it minimal (no heavy component)
+function PageLoader() {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
+      <div style={{ color: '#888', fontSize: '14px' }}>Loading...</div>
+    </div>
+  );
+}
 
 // Redirect "/trade" (no pair) → first active pair
 function TradeRedirect() {
@@ -22,29 +35,33 @@ function TradeRedirect() {
 export default function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route element={<AppShell />}>
-          {/* Default → market */}
-          <Route index element={<Navigate to="/market" replace />} />
+      <ErrorBoundary>
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            <Route element={<AppShell />}>
+              {/* Default → market */}
+              <Route index element={<Navigate to="/market" replace />} />
 
-          {/* Market overview */}
-          <Route path="/market" element={<MarketPage />} />
+              {/* Market overview */}
+              <Route path="/market" element={<MarketPage />} />
 
-          {/* Trading */}
-          <Route path="/trade" element={<TradeRedirect />} />
-          <Route path="/trade/:pair" element={<TradingPage />} />
+              {/* Trading */}
+              <Route path="/trade" element={<TradeRedirect />} />
+              <Route path="/trade/:pair" element={<TradingPage />} />
 
-          {/* Account */}
-          <Route path="/account" element={<AccountPage />} />
+              {/* Account */}
+              <Route path="/account" element={<AccountPage />} />
 
-          {/* Legacy redirects */}
-          <Route path="/swap"      element={<Navigate to="/account" replace />} />
-          <Route path="/portfolio" element={<Navigate to="/account" replace />} />
+              {/* Legacy redirects */}
+              <Route path="/swap"      element={<Navigate to="/account" replace />} />
+              <Route path="/portfolio" element={<Navigate to="/account" replace />} />
 
-          {/* Swap kept at its own route (accessible from account) */}
-          <Route path="/swap/page" element={<SwapPage />} />
-        </Route>
-      </Routes>
+              {/* Swap kept at its own route (accessible from account) */}
+              <Route path="/swap/page" element={<SwapPage />} />
+            </Route>
+          </Routes>
+        </Suspense>
+      </ErrorBoundary>
     </BrowserRouter>
   );
 }
