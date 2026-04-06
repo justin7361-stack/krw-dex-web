@@ -19,8 +19,34 @@ This is the **HyperKRW DEX Frontend**: React + Vite SPA for the HyperKRW CLOB DE
 5. 새로운 todo 작성 시 반드시 review.md의 Critical/Important 이슈를 반영하여 우선순위 결정
 
 ### 세션 종료 시 반드시:
-1. `docs/tmr_todo.md` 업데이트 (설계 결정사항, 주의사항, 다음 세션에 알아야 할 것 포함)
+1. `docs/tmr_todo.md` 업데이트:
+   - 설계 결정사항, 주의사항, 다음 세션에 알아야 할 것 포함
+   - 완료된 태스크는 커밋 해시와 함께 기록
+   - **사용자가 직접 해야 하는 작업**도 별도 섹션에 명확히 기록 (예: 지갑 설정, 배포 명령어 실행, API 키 발급)
 2. 작업 내용 GitHub에 커밋/푸시
+
+---
+
+## 컨텍스트 관리 규칙 (Context Management)
+
+### 세션 분리 원칙
+3개 레포(krw-dex-server / HyperEVM-KRW-DEX / krw-dex-web)를 동시에 다루면 컨텍스트가 빠르게 소모된다.
+**레포 1개 = 세션 1개** 원칙을 기본으로 한다.
+
+| 세션 유형 | 담당 레포/범위 |
+|---------|-------------|
+| Frontend 세션 | `krw-dex-web` 단독 |
+| Contract 세션 | `HyperEVM-KRW-DEX` 단독 |
+| Server 세션 | `krw-dex-server` 단독 |
+| Infra/Deploy 세션 | docker-compose, Railway, Vercel |
+
+### 새 세션이 필요한 신호 (Claude가 알려줄 것)
+- compaction 이력이 있고 다음 태스크가 다른 레포로 전환될 때
+- 컨텍스트 소모가 많아 코드 품질에 영향을 줄 가능성이 보일 때
+
+### tmr_todo.md가 세션 간 핵심 인수인계 수단
+- `tmr_todo.md`의 커밋 해시 + 설계 결정사항으로 맥락 복원 가능
+- **사용자 직접 실행 항목**도 명시 — Claude가 세션 시작 시 리마인드
 
 ---
 
